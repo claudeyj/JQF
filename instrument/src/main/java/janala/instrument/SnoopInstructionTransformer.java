@@ -20,9 +20,11 @@ import org.objectweb.asm.ClassWriter;
 public class SnoopInstructionTransformer implements ClassFileTransformer {
   private static final String instDir = Config.instance.instrumentationCacheDir;
   private static final boolean verbose = Config.instance.verbose;
-  private static String[] banned = {"[", "java/lang", "org/eclipse/collections", "edu/berkeley/cs/jqf/fuzz/util", "janala", "org/objectweb/asm", "sun", "jdk", "java/util/function"};
+  private static String[] banned = {"[", "java/lang", "org/eclipse/collections", "edu/berkeley/cs/jqf/fuzz/util", "janala", "org/objectweb/asm", "sun", "jdk", "java/util/function", "org/evosuite/runtime/mock", "org/xmlpull/v1", "com/thoughtworks/xstream"};
   private static String[] excludes = Config.instance.excludeInst;
   private static String[] includes = Config.instance.includeInst;
+  private static String[] includeOnly = Config.instance.includeOnly;
+
   public static void premain(String agentArgs, Instrumentation inst) throws ClassNotFoundException {
 
     preloadClasses();
@@ -33,6 +35,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
         try {
           String cname = clazz.getName().replace(".","/");
           if (shouldExclude(cname) == false) {
+          // if (shouldExclude(cname) == false && shouldIncludeOnly(cname) == true) {
             if (inst.isModifiableClass(clazz)) {
               inst.retransformClasses(clazz);
             } else {
@@ -80,6 +83,21 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
     return false;
   }
 
+  @Deprecated
+  private static boolean shouldIncludeOnly(String cname) {
+    if (includeOnly.length == 0) {
+      return true;
+    }
+    else {
+      for (String e : includeOnly) {
+        if (cname.startsWith(e)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
   @Override
   synchronized public byte[] transform(ClassLoader loader, String cname, Class<?> classBeingRedefined,
       ProtectionDomain d, byte[] cbuf)
@@ -90,6 +108,8 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
       return null;
     }
     boolean toInstrument = !shouldExclude(cname);
+
+    // toInstrument = shouldIncludeOnly(cname) && toInstrument; // this line leads to out of byted error
 
     if (toInstrument) {
       print("[INFO] ");

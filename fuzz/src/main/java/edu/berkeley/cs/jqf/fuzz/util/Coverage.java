@@ -31,6 +31,7 @@ package edu.berkeley.cs.jqf.fuzz.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import edu.berkeley.cs.jqf.instrument.tracing.events.BranchEvent;
@@ -47,6 +48,12 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
  * @author Rohan Padhye
  */
 public class Coverage implements TraceEventVisitor, ICoverage<Counter> {
+
+    /** Only collect coverage of SUT */
+    private static final boolean SUT_ONLY = Boolean.parseBoolean(System.getProperty("jqf.cov.sut_only", "false"));
+
+    /** CUT name */
+    private static final String cutInternalName = System.getProperty("jqf.cut", null) == null ? null : System.getProperty("jqf.cut").replace('.', '/');
 
     /** The size of the coverage map. */
     private final int COVERAGE_MAP_SIZE = (1 << 16) - 1; // Minus one to reduce collisions
@@ -95,12 +102,28 @@ public class Coverage implements TraceEventVisitor, ICoverage<Counter> {
 
     @Override
     public void visitBranchEvent(BranchEvent b) {
-        counter.increment1(b.getIid(), b.getArm());
+
+        if (!SUT_ONLY || (cutInternalName != null && b.getContainingClass().equals(cutInternalName))) {
+            System.out.println("branch event: " + b.toString() + " in " + b.getContainingClass() + "#" + b.getContainingMethodName());
+            counter.increment1(b.getIid(), b.getArm());
+        }
+
+        if (SUT_ONLY ^ (cutInternalName != null)) {
+            throw new IllegalStateException("SUT_ONLY and cutName must be used together");
+        }
     }
 
     @Override
     public void visitCallEvent(CallEvent e) {
-        counter.increment(e.getIid());
+        if (!SUT_ONLY || (cutInternalName != null && (e.getContainingClass().startsWith(cutInternalName)))) {
+            // works for inner class and test class
+            System.out.println("cut call event: " + e.toString() + " in " + e.getContainingClass() + "#" + e.getContainingMethodName());
+            counter.increment(e.getIid());
+        }
+
+        if (SUT_ONLY ^ (cutInternalName != null)) {
+            throw new IllegalStateException("SUT_ONLY and cutName must be used together");
+        }
     }
 
     /**

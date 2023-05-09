@@ -1,0 +1,13 @@
+package edu.berkeley.cs.jqf.examples.common.testgen;
+
+import org.evosuite.TestSuiteGenerator;
+import org.junit.Test;
+
+public class TestSuiteGeneratorTest {
+
+    @Test
+    public void test() {
+        TestSuiteGenerator generator = new TestSuiteGenerator();
+        generator.generateTestSuite();
+    }
+}

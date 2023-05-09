@@ -37,12 +37,15 @@ import java.net.MalformedURLException;
 import java.net.URLClassLoader;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 import edu.berkeley.cs.jqf.fuzz.ei.ExecutionIndexingGuidance;
 import edu.berkeley.cs.jqf.fuzz.ei.ZestGuidance;
 import edu.berkeley.cs.jqf.fuzz.guidance.GuidanceException;
+import edu.berkeley.cs.jqf.fuzz.guidance.StreamBackedRandom;
 import edu.berkeley.cs.jqf.fuzz.junit.GuidedFuzzing;
 import edu.berkeley.cs.jqf.instrument.InstrumentingClassLoader;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
@@ -56,6 +59,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.junit.runner.Result;
+
 
 import static edu.berkeley.cs.jqf.instrument.InstrumentingClassLoader.stringsToUrls;
 
@@ -337,7 +341,8 @@ public class FuzzGoal extends AbstractMojo {
 
         try {
             List<String> classpathElements = project.getTestClasspathElements();
-
+            List<String> sutClasspathElements = getSUTClasspathElements();
+            classpathElements.addAll(sutClasspathElements);
             if (disableCoverage) {
                 loader = new URLClassLoader(
                         stringsToUrls(classpathElements.toArray(new String[0])),
@@ -347,9 +352,15 @@ public class FuzzGoal extends AbstractMojo {
                 loader = new InstrumentingClassLoader(
                         classpathElements.toArray(new String[0]),
                         getClass().getClassLoader());
+
             }
+
         } catch (DependencyResolutionRequiredException|MalformedURLException e) {
-            throw new MojoExecutionException("Could not get project classpath", e);
+            if (e instanceof ClassNotFoundException) {
+                throw new MojoExecutionException("Could not find class " + e.getMessage(), e);
+            } else {
+                throw new MojoExecutionException("Could not get project classpath", e);
+            }
         }
 
         File resultsDir = new File(target, outputDirectory);
@@ -385,9 +396,13 @@ public class FuzzGoal extends AbstractMojo {
         } catch (RuntimeException e) {
             throw new MojoExecutionException("Internal error", e);
         }
+        finally {
+            StreamBackedRandom.printInvocationCounters();
+        }
 
         if (!result.wasSuccessful()) {
             Throwable e = result.getFailures().get(0).getException();
+            e.printStackTrace();
             if (result.getFailureCount() == 1) {
                 if (e instanceof GuidanceException) {
                     throw new MojoExecutionException("Internal error", e);
@@ -399,5 +414,14 @@ public class FuzzGoal extends AbstractMojo {
                     result.getFailureCount(), resultsDir) +
                     "Sample exception included with this message.", e);
         }
+    }
+
+    private List<String> getSUTClasspathElements() {
+        List<String> classpathElements = new ArrayList<>();
+        String sutCP = System.getProperty("jqf.sut_classpath");
+        if (sutCP != null) {
+            classpathElements.addAll(Arrays.asList(sutCP.split(File.pathSeparator)));
+        }
+        return classpathElements;
     }
 }

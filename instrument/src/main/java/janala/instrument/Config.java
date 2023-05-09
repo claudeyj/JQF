@@ -15,6 +15,7 @@ class Config {
   public final String analysisClass;
   public final String[] excludeInst;
   public final String[] includeInst;
+  public final String[] includeOnly;
   public final boolean instrumentHeapLoad;
   public final boolean instrumentAlloc;
   public final String instrumentationCacheDir;
@@ -34,6 +35,7 @@ class Config {
       properties.putAll(System.getProperties());
 
       verbose = Boolean.parseBoolean(properties.getProperty("janala.verbose", "false"));
+      System.out.println("verbose: " + verbose);
 
       useFastCoverageInstrumentation = Boolean.parseBoolean(properties.getProperty("useFastNonCollidingCoverageInstrumentation", "false"));
       if(useFastCoverageInstrumentation){
@@ -65,6 +67,14 @@ class Config {
           includeInst = includeInstStr.replace('.', '/').split(",");
       } else {
           includeInst = new String[0];
+      }
+
+      String includeOnlyStr = properties.getProperty("janala.includeOnly", null);
+      System.out.println("includeOnlyStr: " + includeOnlyStr);
+      if (includeOnlyStr != null) {
+          includeOnly = includeOnlyStr.replace('.', '/').split(",");
+      } else {
+          includeOnly = new String[0];
       }
 
       instrumentationCacheDir = properties.getProperty("janala.instrumentationCacheDir");

@@ -55,6 +55,8 @@ public class StreamBackedRandom extends Random {
     private int totalBytesRead = 0;
     private int leadingBytesToIgnore = 0;
 
+    private static int invocationCounter = 0;
+
     /**
      * Constructs a stream-backed random generator.
      *
@@ -106,6 +108,7 @@ public class StreamBackedRandom extends Random {
      */
     @Override
     public int next(int bits) {
+        invocationCounter ++;
         // Ensure that up to 32 bits are being requested
         if (bits < 0 || bits > 32) {
             throw new IllegalArgumentException("Must read 1-32 bits at a time");
@@ -169,6 +172,10 @@ public class StreamBackedRandom extends Random {
 
     public int getTotalBytesRead() {
         return this.totalBytesRead;
+    }
+
+    public static void printInvocationCounters() {
+        System.out.println("StreamBackedRandom invocation counter: " + invocationCounter);
     }
 
 }

@@ -1,0 +1,96 @@
+package edu.berkeley.cs.jqf.examples.common.testgen;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.evosuite.shaded.org.apache.commons.cli.CommandLine;
+import org.evosuite.shaded.org.apache.commons.cli.CommandLineParser;
+import org.evosuite.shaded.org.apache.commons.cli.GnuParser;
+import org.evosuite.shaded.org.apache.commons.cli.Options;
+import org.evosuite.shaded.org.apache.commons.cli.ParseException;
+import org.evosuite.testcase.TestCase;
+import org.evosuite.testcase.execution.ExecutionResult;
+import org.evosuite.testsuite.TestSuiteChromosome;
+import org.evosuite.ClientProcess;
+import org.evosuite.CommandLineParameters;
+import org.evosuite.Properties;
+import org.evosuite.TestSuiteGenerator;
+import org.evosuite.TimeController;
+import org.evosuite.executionmode.TestGeneration;
+import org.evosuite.result.TestGenerationResult;
+import org.evosuite.utils.ExternalProcessGroupHandler;
+import org.evosuite.utils.LoggingUtils;
+
+public class TestSuiteGeneratorTest {
+
+    // public static void setup() {
+    //     ClientProcess process = new ClientProcess();
+    //     TimeController.resetSingleton();
+    // }
+
+    public static void config() {
+        String projectCP = "/home/jun/research/test_gen/JQF/examples/src/main/resources/project/bin";
+        String targetClass = "org.example.TestGenerationTarget";
+        Properties.getInstance();
+        // Properties.getInstance().writeConfiguration("original_evosuite.properties");
+        Properties.CP = projectCP;
+        // Properties.NUM_PARALLEL_CLIENTS =
+        Properties.TARGET_CLASS = targetClass;
+        Properties.STOPPING_CONDITION = Properties.StoppingCondition.MAXTIME;
+        Properties.SEARCH_BUDGET = 5;
+        // Properties.LOG_LEVEL = "info";
+        Properties.SELECTION_FUNCTION = Properties.SelectionFunction.RANK_CROWD_DISTANCE_TOURNAMENT;
+        Properties.TEST_SCAFFOLDING = false;
+        Properties.STREAM_BACKED_RANDOMNESS = true;
+    }
+    public static void main(String[] args) {
+        config();
+        TestSuiteGenerator generator = new TestSuiteGenerator();
+        TestGenerationResult result = generator.generateTestSuite();
+
+        TestSuiteChromosome suite = result.getTestSuiteChromosome();
+
+        List<TestCase> testCases = suite.getTests();
+        TestSuiteStringBuilder testSuiteStringBuilder = new TestSuiteStringBuilder();
+        testSuiteStringBuilder.setTestCases(testCases);
+        testSuiteStringBuilder.setNameGenerator(testCases, suite.getLastExecutionResults());
+
+        System.out.println("##################" );
+        System.out.println(testSuiteStringBuilder.formattedTest(testCases, Properties.TARGET_CLASS, suite.getLastExecutionResults()));
+
+        // for (TestCase test : suite.getTests()) {
+        //     System.out.println("##################" );
+        //     System.out.println(test.toCode());
+        // }
+
+        // for (ExecutionResult execResult : suite.getLastExecutionResults()) {
+        //     System.out.println("Execution result:");
+        //     System.out.println(execResult);
+        //     System.out.println(execResult.getAllThrownExceptions());
+        // }
+
+        System.exit(0);
+
+        // System.out.println("Generation status " + result.getTestGenerationStatus());
+        // System.out.println(result.getTestSuiteCode());
+
+        // LoggingUtils[] logServer = new LoggingUtils[Properties.NUM_PARALLEL_CLIENTS];
+
+
+        // ExternalProcessGroupHandler handler = new ExternalProcessGroupHandler(Properties.NUM_PARALLEL_CLIENTS);
+        // int port = handler.openServer();
+        // Properties.PROCESS_COMMUNICATION_PORT = port;
+        // ClientProcess.main(new String[]{});
+
+        // Options options = CommandLineParameters.getCommandLineOptions();
+        // List<String> javaOpts = new ArrayList<>();
+        // javaOpts.add("-Dnum_parallel_clients=1");
+        // javaOpts.add("-Dsearch_budget=10");
+        // javaOpts.add("-Dstopping_condition=MaxTime");
+        // // CommandLine line = new CommandLine.Builder().build();
+
+        // TestGeneration.generateTests(Properties.STRATEGY.EVOSUITE, Properties.TARGET_CLASS, javaOpts);
+    }
+}

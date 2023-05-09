@@ -1,0 +1,43 @@
+package edu.berkeley.cs.jqf.examples.common.testgen;
+
+import java.util.List;
+
+import org.evosuite.junit.naming.methods.NumberedTestNameGenerationStrategy;
+import org.evosuite.junit.writer.TestSuiteWriter;
+import org.evosuite.testcase.TestCase;
+import org.evosuite.testcase.execution.ExecutionResult;
+
+/*
+ * Dummy class of the same thing in test directory
+ */
+public class TestSuiteStringBuilder extends TestSuiteWriter{
+    // private NumberedTestNameGenerationStrategy nameGenerator;
+
+    public void setTestCases(List<TestCase> testCases) {
+        this.testCases = testCases;
+    }
+    
+    public void setNameGenerator(List<TestCase> testCases, List<ExecutionResult> results) {
+        super.nameGenerator = new NumberedTestNameGenerationStrategy(testCases, results);
+    }
+
+    public String formattedTest(List<TestCase> testCases, String targetClass, List<ExecutionResult> results) {
+        String testClassName = targetClass.substring(targetClass.lastIndexOf('.') + 1) + "Test";
+        // for (int i = 0; i < testCases.size(); i++) {
+        //     String testCode = getMergedUnitTest(testClassName, i, results);
+        //     content += testCode;
+        // }
+        // content = getMergedTestSuite(testClassName, results);
+        String content = getUnitTestsAllInSameFile(testClassName, results);
+        return content;
+    }
+
+    // public String getMergedTestSuite(String name, List<ExecutionResult> results) {
+    //     StringBuilder builder = new StringBuilder();
+    //     builder.append(getHeader(name, name, results));
+    //     // builder.append(testToString(testId, testId, results.get(testId)));;
+    //     builder.append(getFooter());
+
+    //     return builder.toString();
+    // }
+}
