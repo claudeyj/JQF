@@ -102,6 +102,7 @@ public class Coverage implements TraceEventVisitor, ICoverage<Counter> {
 
     @Override
     public void visitBranchEvent(BranchEvent b) {
+        // System.out.println("branch event: " + b.toString() + " in " + b.getContainingClass() + "#" + b.getContainingMethodName());
 
         if (!SUT_ONLY || (cutInternalName != null && b.getContainingClass().equals(cutInternalName))) {
             System.out.println("branch event: " + b.toString() + " in " + b.getContainingClass() + "#" + b.getContainingMethodName());
@@ -115,6 +116,7 @@ public class Coverage implements TraceEventVisitor, ICoverage<Counter> {
 
     @Override
     public void visitCallEvent(CallEvent e) {
+        // System.out.println("call event: " + e.toString() + " in " + e.getContainingClass() + "#" + e.getContainingMethodName());
         if (!SUT_ONLY || (cutInternalName != null && (e.getContainingClass().startsWith(cutInternalName)))) {
             // works for inner class and test class
             System.out.println("cut call event: " + e.toString() + " in " + e.getContainingClass() + "#" + e.getContainingMethodName());
