@@ -18,7 +18,7 @@ public class EvoSuiteTestGenerator {
     private String projectCP;
     private String targetClass;
     private final Properties.StoppingCondition stoppingCondition = Properties.StoppingCondition.MAXTIME; //hard coded for now
-    private final int searchBudget = 10; //hard coded for now
+    private final int searchBudget = 30; //hard coded for now
     private final String logLevel = "OFF"; //hard coded for now
     private final Properties.SelectionFunction selectionFunction = Properties.SelectionFunction.RANK_CROWD_DISTANCE_TOURNAMENT; //hard coded for now
     
@@ -40,10 +40,10 @@ public class EvoSuiteTestGenerator {
         Properties.STREAM_BACKED_RANDOMNESS = true;
         Properties.RANDOM_SEED = (long) 1;
 
-        Properties.STRATEGY = Properties.STRATEGY.RANDOM;
+        Properties.STRATEGY = Properties.STRATEGY.SIMPLE_RANDOM;
         Properties.ALGORITHM = Properties.ALGORITHM.SIMPLE_RANDOM_SEARCH;
         // Properties.POPULATION = Integer.MAX_VALUE;
-        Properties.NO_RUNTIME_DEPENDENCY = true;
+        // Properties.NO_RUNTIME_DEPENDENCY = true;
         Properties.TIMEOUT_BLOCKED = true;
     }
     

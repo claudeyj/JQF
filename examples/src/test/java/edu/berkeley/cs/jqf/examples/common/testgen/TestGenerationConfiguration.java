@@ -12,5 +12,5 @@ import com.pholser.junit.quickcheck.generator.GeneratorConfiguration;
 @GeneratorConfiguration
 public @interface TestGenerationConfiguration {
     String targetClassCanonicalName();
-    String projectClassPath();
+    String projectClassPath(); // class path of the project under test, sperated by :
 }

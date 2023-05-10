@@ -33,10 +33,12 @@ public class TestEvaluator {
 
     private String projectCP;
     private String junitJarPath = JUnitCore.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+    private String evosuiteRuntimeJarPath = "/home/jun/fastd/.m2_mirror/repository/org/evosuite/evosuite-standalone-runtime/1.2.1-SNAPSHOT/evosuite-standalone-runtime-1.2.1-SNAPSHOT.jar";
 
     private String targetRootDir;
     private String debugRootDir;
     private static int counter = 0;
+    private static boolean cleanFlag = false;
 
     public TestEvaluator(String projectCP, String targetRootDir, String debugRootDir) {
         compiler = ToolProvider.getSystemJavaCompiler();
@@ -44,6 +46,15 @@ public class TestEvaluator {
         this.projectCP = new File(projectCP).getAbsolutePath();
         this.targetRootDir = targetRootDir;
         this.debugRootDir = debugRootDir;
+        if (!cleanFlag) {
+            try {
+                FileUtils.deleteDirectory(new File(targetRootDir));
+                FileUtils.deleteDirectory(new File(debugRootDir));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            cleanFlag = true;
+        }
     }
     
     public boolean compile(String targetClassName, String testSuiteContent) {
@@ -54,7 +65,7 @@ public class TestEvaluator {
         new File(targetDir).mkdirs();
 
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-        List<String> options = Arrays.asList("-classpath", ".:" + projectCP + ":" + junitJarPath, "-d", targetDir);
+        List<String> options = Arrays.asList("-classpath", ".:" + projectCP + ":" + junitJarPath + ":" + evosuiteRuntimeJarPath, "-d", targetDir);
         CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
 
         if (task.call()) {

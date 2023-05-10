@@ -32,4 +32,21 @@ public class CGFDriverTest {
                 e.printStackTrace();
             }
         }
+
+    @Fuzz
+    public void testWithGenerator2(@From (CGFTestSuiteGenerator.class)
+        @TestGenerationConfiguration(targetClassCanonicalName = "com.ib.client.AnyWrapperMsgGenerator",
+        projectClassPath = "/home/jun/research/test_gen/JQF/examples/src/main/resources/SF110-20130704/1_tullibee/tullibee.jar") String testSuiteContent){
+        try {
+            assumeTrue(testSuiteContent != null);
+            String targetRootDir = "cut_target/1_tullibee";
+            String debugRootDir = "debug/1_tullibee";
+            TestEvaluator evaluator = new TestEvaluator("/home/jun/research/test_gen/JQF/examples/src/main/resources/SF110-20130704/1_tullibee/tullibee.jar", targetRootDir, debugRootDir);
+
+            assumeTrue(evaluator.compile("com.ib.client.AnyWrapperMsgGeneratorTest", testSuiteContent));
+            assumeTrue(evaluator.execute("com.ib.client.AnyWrapperMsgGeneratorTest"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
