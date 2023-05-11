@@ -43,7 +43,7 @@ public class EvoSuiteTestGenerator {
         Properties.STRATEGY = Properties.STRATEGY.SIMPLE_RANDOM;
         Properties.ALGORITHM = Properties.ALGORITHM.SIMPLE_RANDOM_SEARCH;
         // Properties.POPULATION = Integer.MAX_VALUE;
-        // Properties.NO_RUNTIME_DEPENDENCY = true;
+        Properties.NO_RUNTIME_DEPENDENCY = true;
         Properties.TIMEOUT_BLOCKED = true;
     }
     
