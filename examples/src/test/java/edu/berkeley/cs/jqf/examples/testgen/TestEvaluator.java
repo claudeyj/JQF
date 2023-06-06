@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -33,23 +34,28 @@ public class TestEvaluator {
 
     private String projectCP;
     private String junitJarPath = JUnitCore.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+    private String mockitoJarPath = "/home/jun/fastd/.m2_mirror/repository/org/mockito/mockito-core/3.12.4/mockito-core-3.12.4.jar";
     private String evosuiteRuntimeJarPath = "/home/jun/fastd/.m2_mirror/repository/org/evosuite/evosuite-standalone-runtime/1.2.1-SNAPSHOT/evosuite-standalone-runtime-1.2.1-SNAPSHOT.jar";
-
+    
     private String targetRootDir;
     private String debugRootDir;
     private static int counter = 0;
     private static boolean cleanFlag = false;
-
+    
     public TestEvaluator(String projectCP, String targetRootDir, String debugRootDir) {
         compiler = ToolProvider.getSystemJavaCompiler();
         fileManager = compiler.getStandardFileManager(null, null, null);
-        this.projectCP = new File(projectCP).getAbsolutePath();
+        List<String> projectCPList = Arrays.asList(projectCP.split(":")).stream().map(path ->
+        (Paths.get(path).isAbsolute() && new File(path).exists()) ? path :
+                new File(getClass().getClassLoader().getResource(path).getPath()).getAbsolutePath()
+        ).collect(Collectors.toList());   
+        this.projectCP = String.join(":", projectCPList);
         this.targetRootDir = targetRootDir;
         this.debugRootDir = debugRootDir;
         if (!cleanFlag) {
             try {
                 FileUtils.deleteDirectory(new File(targetRootDir));
-                FileUtils.deleteDirectory(new File(debugRootDir));
+                // FileUtils.deleteDirectory(new File(debugRootDir));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -58,18 +64,18 @@ public class TestEvaluator {
     }
     
     public boolean compile(String targetClassName, String testSuiteContent) {
-        dumpTestSourceCode(testSuiteContent, targetClassName);
         JavaFileObject javaFileObject = new JavaSourceFromString(targetClassName, testSuiteContent);
         Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(javaFileObject);
         String targetDir = new File(targetRootDir).getAbsolutePath();
         new File(targetDir).mkdirs();
-
+        
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-        List<String> options = Arrays.asList("-classpath", ".:" + projectCP + ":" + junitJarPath + ":" + evosuiteRuntimeJarPath, "-d", targetDir);
+        List<String> options = Arrays.asList("-classpath", ".:" + projectCP + ":" + junitJarPath + ":" + mockitoJarPath + ":" + evosuiteRuntimeJarPath, "-d", targetDir);
         CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
-
+        
         if (task.call()) {
             System.out.println("Compilation succeeded");
+            dumpTestSourceCode(testSuiteContent, targetClassName);
             dumpBytecode(targetClassName);
             return true;
         } else {
@@ -80,7 +86,6 @@ public class TestEvaluator {
                         diagnostic.getSource().toUri(),
                         diagnostic.getMessage(null));
             }
-            counter++;
             return false;
         }
     }
@@ -124,12 +129,12 @@ public class TestEvaluator {
 
     private void dumpTestSourceCode(String testSuiteContent, String targetClassName) {
         try {
-            String targetDir = new File(new File(debugRootDir, "src"), targetClassName + "_" + counter).getAbsolutePath();
-            if (Files.exists(Paths.get(targetDir))) {
-                FileUtils.deleteDirectory(new File(targetDir));
+            String debugDir = new File(new File(debugRootDir, "src"), targetClassName + "_" + counter).getAbsolutePath();
+            if (Files.exists(Paths.get(debugDir))) {
+                FileUtils.deleteDirectory(new File(debugDir));
             }
-            new File(targetDir).mkdirs();
-            Files.write(Paths.get(targetDir, targetClassName + ".java"), testSuiteContent.getBytes());
+            new File(debugDir).mkdirs();
+            Files.write(Paths.get(debugDir, targetClassName + ".java"), testSuiteContent.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -137,13 +142,13 @@ public class TestEvaluator {
 
     private void dumpBytecode(String targetClassName) {
         try {
-            String targetDir = new File(new File(debugRootDir, "bin"), targetClassName + "_" + counter).getAbsolutePath();
-            if (Files.exists(Paths.get(targetDir))) {
-                FileUtils.deleteDirectory(new File(targetDir));
+            String debugDir = new File(new File(debugRootDir, "bin"), targetClassName + "_" + counter).getAbsolutePath();
+            if (Files.exists(Paths.get(debugDir))) {
+                FileUtils.deleteDirectory(new File(debugDir));
             }
-            new File(targetDir).mkdirs();
+            new File(debugDir).mkdirs();
             // copy the class file to the debug directory
-            FileUtils.copyDirectory(new File(this.targetRootDir), new File(targetDir));
+            FileUtils.copyDirectory(new File(this.targetRootDir), new File(debugDir));
         } catch (IOException | IllegalStateException e) {
             e.printStackTrace();
         }

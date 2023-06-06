@@ -232,6 +232,13 @@
           <artifactId>chocopy-artifacts</artifactId>
           <version>2.2</version>
         </dependency>
+
+        <dependency>
+            <!-- MIT -->
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.12.4</version>
+        </dependency>
     </dependencies>
 
     <build>
