@@ -19,3 +19,7 @@ examples/debug
 examples/cut_target
 examples/src/main/resources/project
 examples/src/main/resources/SF110-20130704
+examples/src/main/resources/driver
+examples/src/main/resources/subjects
+evosuite_jqf_result
+examples/src/test/java/edu/berkeley/cs/jqf/examples/testgen/CGFDynamicDriverTest.java
