@@ -210,7 +210,14 @@ public class GuidedFuzzing {
                 junit.addListener(new TextListener(out));
             }
 
-            return junit.run(testRunner);
+            Result result = null;
+            try {
+                result = junit.run(testRunner);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+            return result;
 
         } finally {
             // Make sure to de-register the guidance before returning
