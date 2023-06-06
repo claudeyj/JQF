@@ -35,7 +35,6 @@ class Config {
       properties.putAll(System.getProperties());
 
       verbose = Boolean.parseBoolean(properties.getProperty("janala.verbose", "false"));
-      System.out.println("verbose: " + verbose);
 
       useFastCoverageInstrumentation = Boolean.parseBoolean(properties.getProperty("useFastNonCollidingCoverageInstrumentation", "false"));
       if(useFastCoverageInstrumentation){
@@ -70,7 +69,6 @@ class Config {
       }
 
       String includeOnlyStr = properties.getProperty("janala.includeOnly", null);
-      System.out.println("includeOnlyStr: " + includeOnlyStr);
       if (includeOnlyStr != null) {
           includeOnly = includeOnlyStr.replace('.', '/').split(",");
       } else {
