@@ -1,7 +1,8 @@
 import os, sys
 from typing import List
 from pathlib import Path
-from utils import get_all_classes_from_jar, build_project_cp, dump_content_to_file
+from utils import get_all_classes_from_jar, get_all_classes_from_dir, build_project_cp, dump_content_to_file
+from d4j import Defects4J
 
 DRIVER_SIMPLE_NAME = 'CGFDynamicDriverTest'
 DRIVER_TEMPLATE_PATH = (Path(__file__ + '/../../../..') / 'examples' / 'src' / 'main' / 'resources' / 'driver' / f'{DRIVER_SIMPLE_NAME}.java').resolve()
@@ -20,7 +21,8 @@ def build_jqf_command(
     subject_name:str,
     class_name:str,
     proj_cp_list:List[str],
-    log_path:Path
+    log_path:Path,
+    pom_path:Path=(Path(__file__ + '/../../../..') / 'examples' / 'pom.xml').resolve()
 ) -> str:
     '''
     class_name: the canonical name of the class under test
@@ -38,6 +40,7 @@ def build_jqf_command(
         f'-Djqf.sut_classpath={build_project_cp(proj_cp_list + [str(CUT_TARGET_ROOT_DIR / subject_name)])}',
         f'-Djqf.cut={class_name}',
         '-Djanala.verbose=true',
+        f'-f {str(pom_path)}',
         f'> {str(log_path)}',
         '2>&1'
     ]
@@ -121,7 +124,7 @@ def gen_tests_for_SF_subjects(sf_root_dir:Path, sf_subjects:List[str]):
 
             # get driver test content
             driver_content = build_driver_content(subject_name, [class_name], [sut_cp], test_dir, debug_dir)
-            # # dump driver test content to file
+            # dump driver test content to file
             dump_content_to_file(driver_content, DRIVER_PATH)
             
             # run evo-jqf
@@ -130,19 +133,42 @@ def gen_tests_for_SF_subjects(sf_root_dir:Path, sf_subjects:List[str]):
             try:
                 os.system(cmd)
             except KeyboardInterrupt:
-                sys.exit(1)
+                sys.exit(0)
                 
+def gen_tests_for_d4j_subjects(d4j_repo_root_dir:Path, d4j_subjects:List[str]):
+    for d4j_subject_name in d4j_subjects:
+        # d4j_subject_name: 'chart_1'
+        proj_name, id = d4j_subject_name.split('_')
+        d4j_repo_dir = d4j_repo_root_dir / d4j_subject_name
+        d4j_proj = Defects4J(proj_name, id, 'buggy', d4j_repo_dir)
+        d4j_proj.checkout_if_not_exist_or_empty()
+        d4j_proj.compile()
+        proj_cp = d4j_proj.get_proj_cp() # ":" separated
+        bin_dir = d4j_repo_dir / d4j_proj.get_rela_bin_path()
+        for class_name in get_all_classes_from_dir(bin_dir):
+            log_path = LOG_ROOT_DIR / d4j_subject_name / f'{class_name}.log'
+            debug_dir = DEBUG_ROOT_DIR / d4j_subject_name / f'{class_name}'
+            test_dir = EVO_JQF_TEST_BIN_DIR / d4j_subject_name / f'{class_name}'
+            
+            # get driver test content
+            driver_content = build_driver_content(d4j_subject_name, [class_name], proj_cp.split(':'), test_dir, debug_dir)
+            # dump driver test content to file
+            dump_content_to_file(driver_content, DRIVER_PATH)
+            
+            # run evo-jqf
+            cmd = build_jqf_command(proj_name, class_name, proj_cp.split(':'), log_path)
+            print('Running command: \n' + cmd)
+            try:
+                os.system(cmd)
+            except KeyboardInterrupt:
+                sys.exit(0)
+
 # utility functions
 def get_fuzz_method_name(sut_name:str) -> str:
     sut_under_score = sut_name.replace('.', '_')
     return 'testWithGenerator_' + sut_under_score
 
 if __name__ == '__main__':
-    # proj_cp_list = ['SF110-20130704/2_a4j/a4j.jar', 'SF110-20130704/2_a4j/lib/jox116.jar', 'SF110-20130704/2_a4j/lib/log4j-1.2.4.jar']
-    # fuzz_test_case = build_fuzz_test_case('2_a4j', 'net.kencochrane.a4j.beans.BlendedSearch', proj_cp_list, 'cut_target', 'debug')
-    
-    # print(fuzz_test_case)
-    # driver_content = build_driver_content('2_a4j', ['net.kencochrane.a4j.beans.BlendedSearch'], proj_cp_list, 'cut_target', 'debug')
-    # print(driver_content)
-    
-    gen_tests_for_SF_subjects(Path('/home/jun/research/test_gen/JQF/examples/src/main/resources/SF110-20130704'), ['2_a4j'])
+    d4j_repo_root_dir = Path(sys.argv[1])
+    d4j_subjects = sys.argv[2].split(',')
+    gen_tests_for_d4j_subjects(d4j_repo_root_dir, d4j_subjects)
