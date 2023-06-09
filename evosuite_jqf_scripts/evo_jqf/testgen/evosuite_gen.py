@@ -75,6 +75,7 @@ def gen_tests_for_d4j_subjects(d4j_repo_root_dir:Path, d4j_subjects:List[str]):
         d4j_repo_dir = d4j_repo_root_dir / d4j_subject_name
         d4j_proj = Defects4J(proj_name, id, 'buggy', d4j_repo_dir)
         d4j_proj.checkout_if_not_exist_or_empty()
+        d4j_proj.clean()
         d4j_proj.compile()
         proj_cp = d4j_proj.get_proj_cp() # ":" seperated
         bin_dir = d4j_repo_dir / d4j_proj.get_rela_bin_path()
@@ -82,6 +83,11 @@ def gen_tests_for_d4j_subjects(d4j_repo_root_dir:Path, d4j_subjects:List[str]):
             log_path = LOG_ROOT_DIR / d4j_subject_name / f'{class_name}.log'
             report_dir = REPORT_ROOT_DIR / d4j_subject_name / f'{class_name}'
             test_dir = EVO_TEST_DIR / d4j_subject_name / f'{class_name}'
+            
+            if log_path.exists():
+                # skip if log file exists
+                continue
+            
             cmd = build_evosuite_cmd(class_name, proj_cp.split(':'), log_path, evo_test_dir=test_dir, evo_report_dir=report_dir)
             print('Running command: ' + cmd)
             try:

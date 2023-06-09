@@ -142,6 +142,7 @@ def gen_tests_for_d4j_subjects(d4j_repo_root_dir:Path, d4j_subjects:List[str]):
         d4j_repo_dir = d4j_repo_root_dir / d4j_subject_name
         d4j_proj = Defects4J(proj_name, id, 'buggy', d4j_repo_dir)
         d4j_proj.checkout_if_not_exist_or_empty()
+        d4j_proj.clean()
         d4j_proj.compile()
         proj_cp = d4j_proj.get_proj_cp() # ":" separated
         bin_dir = d4j_repo_dir / d4j_proj.get_rela_bin_path()
@@ -149,6 +150,10 @@ def gen_tests_for_d4j_subjects(d4j_repo_root_dir:Path, d4j_subjects:List[str]):
             log_path = LOG_ROOT_DIR / d4j_subject_name / f'{class_name}.log'
             debug_dir = DEBUG_ROOT_DIR / d4j_subject_name / f'{class_name}'
             test_dir = EVO_JQF_TEST_BIN_DIR / d4j_subject_name / f'{class_name}'
+            
+            if log_path.exists():
+                # skip if log file exists
+                continue
             
             # get driver test content
             driver_content = build_driver_content(d4j_subject_name, [class_name], proj_cp.split(':'), test_dir, debug_dir)
